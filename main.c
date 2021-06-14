@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#define NBS_PARTIE 10000000
+
 
 typedef enum CARTE
 {
@@ -125,12 +127,15 @@ typedef struct Hand_of_other_player
 {
 	CARTE c1;
 	CARTE c2;
-	int score;
 	
 }Hand_of_other_player;
 
 
-
+typedef struct Score
+{
+	int score1;
+	int score2;
+}Score;
 
 
 int random( int MIN, int MAX)
@@ -143,6 +148,7 @@ int random( int MIN, int MAX)
 
 CARTE input_carte(void)
 {
+
 	printf("\n");
 	
 	printf("Carreau = 0\nCoeur = 1\nTrefle = 2\nPique = 3\n");
@@ -199,8 +205,12 @@ int choisir_carte_aleatoirement(CARTE *tas_de_carte)
 
 
 
+
+
+
+
 // en pourcent, a l'unité près !
-int win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
+float win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
 {	
 	nbs_joueur -= 1;
 	CARTE tas_de_carte[52];
@@ -225,13 +235,41 @@ int win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
 
 
 
+	Score *score = NULL;		//creation du pointeur 
 
-	int nbs_fois_best_hand = 0;
-	int nbs_de_partie = 1;
+	//allocation memoir, creation d'un tableau dynamique !
+	score = malloc(sizeof(Score) * nbs_joueur+1);
+	if(score == NULL){
+		exit(1);
+	}
 
+	float nbs_fois_best_hand = 0;
 	
-	for (int i = 0; i < nbs_de_partie; ++i) // boucle de monte carlos !
-	{
+
+
+
+	for (int i = 0; i < NBS_PARTIE; ++i) 		// boucle de monte carlos !
+	{	
+		float var = (float)i/NBS_PARTIE;
+		if ( (NBS_PARTIE/100) != 0 )
+		{
+			int nbs_dd = NBS_PARTIE;
+			if (i % (nbs_dd /100) == 0)
+			{	
+				printf("chargement : %.f \n",var*100);
+			}
+		}
+		
+
+
+		/*
+		printf("\n");
+		printf("=====================================================================\n");
+		printf("boucle de monte carlos\n");
+		printf("=====================================================================\n");
+		printf("\n");
+		*/
+
 		// initialisation 
 		for (int i = 0; i < 52; ++i)
 		{
@@ -248,7 +286,9 @@ int win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
 
 
 		// END initialisation
-
+		
+		//printf("carte du joueur moi -> %s %s \n",getnamecarte(*(myhands + 0)) , getnamecarte(*(myhands + 1)) );
+		
 		
 		// distribution des cartes au joueur !
 		for (int i = 0; i < nbs_joueur; ++i)
@@ -258,7 +298,8 @@ int win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
 			
 			(*(player + i)).c2 = choisir_carte_aleatoirement(tas_de_carte);
 			
-			printf("carte du joueur %d -> %s %s \n",i,getnamecarte((*(player + i)).c1),getnamecarte((*(player + i)).c2));
+			//printf("carte du joueur %d -> %s %s \n",i+1,getnamecarte((*(player + i)).c1),getnamecarte((*(player + i)).c2));
+			
 		}
 
 		
@@ -276,14 +317,17 @@ int win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
 		{
 			jeu_temp_in_the_middle[i] = choisir_carte_aleatoirement(tas_de_carte);
 		}
-
-
+		/*
+		printf("\n");
 		printf("au centre:\n");
+		
 		for (int i = 0; i < 5; ++i)
 		{
 			printf("%s ",getnamecarte(jeu_temp_in_the_middle[i]));
 		}
 		printf("\n");
+		*/
+
 
 		/*
 		for (int i = 0; i < 52; ++i)
@@ -312,158 +356,683 @@ Vous pouvez donc utiliser une de vos cartes ou les deux, ou même aucune, pour c
 Voici quelques règles sur comment évaluer une main de poker gagnante :
 
 		*/
-
-		for (int i = 0; i < nbs_joueur; ++i)
+		
+		for (int i = 0; i < nbs_joueur+1; ++i)
 		{
-			look[0] = (*(player + i)).c1;
-			look[1] = (*(player + i)).c2;
-			look[2] = jeu_temp_in_the_middle[0];
-			look[3] = jeu_temp_in_the_middle[1];
-			look[4] = jeu_temp_in_the_middle[2];
-			look[5] = jeu_temp_in_the_middle[3];
-			look[6] = jeu_temp_in_the_middle[4];
+			(*(score + i)).score1 = 0;
+			(*(score + i)).score2 = 0;
+		}
 
-			for (int i = 0; i < 7; ++i)
+
+		for (int p = 0; p < nbs_joueur+1; ++p) // boucle pour tout les joueurs !?
+		{	
+			/*
+			printf("\n");
+			printf("joueurs: %d\n", p);
+			printf("\n");
+			*/
+
+			if (p == 0)
 			{
-				printf("look : %d\n",look[i] );
+				look[0] = (*(myhands + 0));
+				look[1] = (*(myhands + 1));
+				look[2] = jeu_temp_in_the_middle[0];
+				look[3] = jeu_temp_in_the_middle[1];
+				look[4] = jeu_temp_in_the_middle[2];
+				look[5] = jeu_temp_in_the_middle[3];
+				look[6] = jeu_temp_in_the_middle[4];
+			}
+			else
+			{
+				look[0] = (*(player + p-1)).c1;
+				look[1] = (*(player + p-1)).c2;
+				look[2] = jeu_temp_in_the_middle[0];
+				look[3] = jeu_temp_in_the_middle[1];
+				look[4] = jeu_temp_in_the_middle[2];
+				look[5] = jeu_temp_in_the_middle[3];
+				look[6] = jeu_temp_in_the_middle[4];
 			}
 
-			int cpt_carreau;
-			int cpt_coeur;
-			int cpt_trefle;
-			int cpt_pique; 
-			for (int i = 0; i < 7; ++i) // detection signe
-			{
 
-				if(look[i] / 13 == 0)
+			
+			/*
+			for (int i = 0; i < 7; ++i)
+			{
+				printf("look : %d\n",look[i]);
+			}
+			*/
+
+			CARTE look_suite[7];	// creation d'un look avec seulement les chiffre
+			for (int i = 0; i < 7; ++i)
+			{
+				if(look[i] % 13 == 0) 
 				{
-					cpt_carreau += 1;
-				}else if(look[i] / 13 == 1)
-				{
-					cpt_coeur += 1;
-				}else if(look[i] / 13 == 2)
-				{
-					cpt_trefle +=1;
-				}else
-				{
-					cpt_pique += 1;
+					look_suite[i] = 13;
 				}
-
-			}
-
-
-			CARTE look_chiffre[7];	// creation d'un look avec seulement les chiffre
-			for (int i = 0; i < 7; ++i)
-			{
-				if (look[i] % 13 == 0)
+				else if(look[i] % 13 == 1) // l'as vaut 14
 				{
-					look_chiffre[i] = 13;
-				}else
+					look_suite[i] = 14;
+				}
+				else
 				{
-					look_chiffre[i] = look[i] % 13;
+					look_suite[i] = look[i] % 13;
 				}
 				
 			}
+			/*
 			for (int i = 0; i < 7; ++i)
 			{
-				printf("look chiffre : %d\n",look_chiffre[i] );
+				printf("look suite : %d\n",look_suite[i]);
 			}
+			*/
 
-			CARTE look_trie[7];
-			int temp5 = 20;
-			int indice_temp5 = 0;
-			for (int k = 0; k < 7; ++k)
-			{
-				for (int i = 0; i < 7; ++i)  //classer du plus petit au plus grand 
+
+			// =========================================debut detection couleur !
+
+			int liste_carreau[7] = {-1,-1,-1,-1,-1,-1,-1};
+			int liste_coeur[7] = {-1,-1,-1,-1,-1,-1,-1};
+			int liste_trefle[7] = {-1,-1,-1,-1,-1,-1,-1};
+			int liste_pique[7] = {-1,-1,-1,-1,-1,-1,-1};
+
+			int indice_carreau[7] = {-1,-1,-1,-1,-1,-1,-1};
+			int indice_coeur[7] = {-1,-1,-1,-1,-1,-1,-1};
+			int indice_trefle[7] = {-1,-1,-1,-1,-1,-1,-1};
+			int indice_pique[7] = {-1,-1,-1,-1,-1,-1,-1};
+
+
+			int cpt_carreau = 0;
+			int cpt_coeur = 0;
+			int cpt_trefle = 0;
+			int cpt_pique = 0; 
+				for (int i = 0; i < 7; ++i) // detection signe
 				{
-					if(look_chiffre[i] < temp5)
+					
+					if((look[i]-1) / 13 == 0)
 					{
-						temp5 = look_chiffre[i];
-						indice_temp5 = i;
+						liste_carreau[cpt_carreau] = look[i];
+						indice_carreau[cpt_carreau] = i;
+						cpt_carreau += 1;
+
+					}
+					else if((look[i]-1) / 13 == 1)
+					{
+						liste_coeur[cpt_coeur] = look[i];
+						indice_coeur[cpt_coeur] = i;
+						cpt_coeur += 1;
+
+					}
+					else if((look[i]-1) / 13 == 2)
+					{
+						liste_trefle[cpt_trefle] = look[i];
+						indice_trefle[cpt_trefle] = i;
+						cpt_trefle +=1;
+
+					}
+					else if ((look[i]-1) / 13 == 3)
+					{	
+						liste_pique[cpt_pique] = look[i];
+						indice_pique[cpt_pique] = i;
+						cpt_pique += 1;
+					}
+
+				}
+
+
+
+			/*
+			printf("cpt_carreau %d\n", cpt_carreau);
+			printf("cpt_coeur %d\n", cpt_coeur);
+			printf("cpt_trefle %d\n", cpt_trefle);
+			printf("cpt_pique %d\n", cpt_pique);
+			*/
+
+			int indice_couleur[7] = {-1,-1,-1,-1,-1,-1,-1};
+			CARTE temp888[7] = {-1,-1,-1,-1,-1,-1,-1};	// detection si suite et mise de la couleur dans temp888
+			int detc_couleur = 0;
+
+			if (cpt_carreau >= 5)
+			{
+				for (int i = 0; i < 7; ++i)
+				{
+					temp888[i] = liste_carreau[i];
+					indice_couleur[i] = indice_carreau[i];
+					detc_couleur = 1;
+				}
+				
+			}
+			else if(cpt_coeur >= 5)
+			{
+				for (int i = 0; i < 7; ++i)
+				{
+					temp888[i] = liste_coeur[i];
+					indice_couleur[i] = indice_coeur[i];
+					detc_couleur = 1;
+				}
+				
+			}
+			else if(cpt_trefle >= 5)
+			{
+				for (int i = 0; i < 7; ++i)
+				{
+					temp888[i] = liste_trefle[i];
+					indice_couleur[i] = indice_trefle[i];
+					detc_couleur = 1;
+				}
+				
+			}
+			else if(cpt_pique >= 5)
+			{
+				for (int i = 0; i < 7; ++i)
+				{
+					temp888[i] = liste_pique[i];
+					indice_couleur[i] = indice_pique[i];
+					detc_couleur = 1;
+				}
+				
+			}
+			/*
+			for (int i = 0; i < 7; ++i)
+			{
+				printf("indice couleur %d\n",indice_couleur[i]);
+			}
+			*/
+						// transformation des cartes look_chiffre en juste le numero !
+			if (detc_couleur == 1)
+			{
+				
+				CARTE look_temp_couleur[7] = {0,0,0,0,0,0,0};
+
+				for (int i = 0; i < 7; ++i)
+				{
+					look_temp_couleur[i] = look_suite[i];			
+				}
+					//classer du plus petit au plus grand 
+
+				
+
+
+
+
+				int ma_couleur[7] = {0,0,0,0,0,0,0};
+
+
+
+				int temp5 = 20;
+				int indice_temp5 = 0;
+				for (int k = 0; k < 7; ++k)
+				{
+					for (int i = 0; i < 7; ++i) 
+					{
+						if(look_temp_couleur[i] < temp5)
+						{
+							temp5 = look_temp_couleur[i];
+							indice_temp5 = i;
+						}
+					}
+					ma_couleur[k] = temp5;
+					temp5 = 20;
+					look_temp_couleur[indice_temp5] = 20;
+				}
+
+				for (int i = 0; i < 7; ++i)
+				{
+					if (ma_couleur[i] == 20)
+					{
+						ma_couleur[i] = -1;
 					}
 				}
-			look_trie[k] = temp5;
-			temp5 = 20;
-			look_chiffre[indice_temp5] = 20;
+				/*
+				printf("couleur detecter ! \n");
+				*/
+
+				/*
+				for (int i = 0; i < 7; ++i)
+				{
+					printf("ma couleur %d\n",ma_couleur[i]);
+				}
+				*/
+
+				int hauteur_c1 = 0;
+				int hauteur_c2 = 0;
+
+				for (int i = 0; i < 7; ++i)
+				{
+					if (indice_couleur[i] == 0)
+					{
+						hauteur_c1 = look_suite[0];
+					}
+					if (indice_couleur[i] == 1)
+					{
+						hauteur_c2 = look_suite[1];
+					}
+				}
+
+				if (hauteur_c1 > hauteur_c2)
+				{
+					
+					(*(score + p)).score1 = 66 + hauteur_c1 -2;
+					(*(score + p)).score2 = 66 + hauteur_c2 -2;
+				}
+				else
+				{
+					
+					(*(score + p)).score2 = 66 + hauteur_c1 -2;
+					(*(score + p)).score1 = 66 + hauteur_c2 -2;
+				}
+
+
+		
+
+
+											
 			}
 
+
+			// ==================================fin couleur
+
+
+			// ==================================debut suite
+
+			
+
+			
+			
+
+			CARTE look_temp[7];
 			for (int i = 0; i < 7; ++i)
 			{
-				printf("look_trie : %d \n",look_trie[i]);
+				look_temp[i] = look_suite[i];
 			}
 
+			int indice_suite[7] = {-1,-1,-1,-1,-1,-1,-1};
+			CARTE look_trie[7] = {0,0,0,0,0,0,0};
+			int temp96 = 20;
+			int indice_temp23 = 0;
+			for (int k = 0; k < 7; ++k)
+			{
+				for (int i = 0; i < 7; ++i)       //classer du plus petit au plus grand 
+				{
+					if(look_temp[i] < temp96)
+					{
+						temp96 = look_temp[i];
+						indice_temp23 = i;
+					}
+				}
+			look_trie[k] = temp96;
+			indice_suite[k] = indice_temp23;
+			temp96 = 20;
+			look_temp[indice_temp23] = 20;
+			}
 
-			int le_plus_grand_de_la_suite = 0;
-			int cpt4 = 0;			//detection suite !
+			/*
+			for (int i = 0; i < 7; ++i)
+			{
+				printf("look trie : %d\n",look_trie[i]);
+			}
+			*/
+			
+			
+
+			
+
+			int indice_le_plus_grand_de_la_suite = 0;
+			int cpt4 = 0;							//detection suite !
+			int le_plus_gros_cpt4 = 0;
 			for (int i = 6; i >= 1; --i)
 			{
 				if(look_trie[i] - look_trie[i-1] == 1)
 				{
 					if (cpt4 == 0)
 					{
-						le_plus_grand_de_la_suite = look_trie[i];
+						indice_le_plus_grand_de_la_suite = i;
 					}
+					
 					cpt4 +=1;
 				}
-				if(look_trie[i] - look_trie[i-1] > 1)
+				if (le_plus_gros_cpt4 < cpt4)
 				{
+					le_plus_gros_cpt4 = cpt4;
+				}
+				if (look_trie[i] - look_trie[i-1] > 1)
+				{	
+					
 					cpt4 = 0;
 				}
 			}
+
+			cpt4 = le_plus_gros_cpt4;
 			if (cpt4 >= 4)
-			{
-				// il y a une suite
-				printf("suite !\n");
+			{	
+				/*
+				printf("detection d'une suite !\n");
+				printf("meilleure carte de la suite: %d\n",look_trie[indice_le_plus_grand_de_la_suite]);
+				*/
+				if (detc_couleur == 1)  // si couleur detecter
 
-				if(le_plus_grand_de_la_suite == 13)
+
+
 				{
+					// alors il y a suite et couleur ! donc potentiellement QF 
 
+					//il faut que se soit les memes !
+
+					for (int i = 6; i > indice_le_plus_grand_de_la_suite; --i)
+					{
+						indice_suite[i] = -1;
+					}
+					/*
+					for (int i = 0; i < 7; ++i)
+					{
+						printf("indice suite %d\n",indice_suite[i]);
+					}
+					*/
+
+					
+					int cpt_same_indice = 0;
+					int indice_quinte_flush[7] = {-1,-1,-1,-1,-1,-1,-1};
+					for (int k = 0; k < 7; ++k)
+					{
+						for (int i = 0; i < 7; ++i)
+						{
+							if ( (indice_couleur[k] == indice_suite[i]) && (indice_couleur[k] != -1))
+							{
+								indice_quinte_flush[k] = indice_couleur[k];
+								cpt_same_indice++;
+							}						
+						}	
+					}
+
+					if (cpt_same_indice >= 5)
+					{
+
+						// il y a au moins 5 carte qui sont a la fois une suite et une couleur !
+						
+						// quinte flush !
+
+						/*
+						for (int i = 0; i < 7; ++i)
+						{
+							printf("indice quinte flush: %d\n", indice_quinte_flush[i]);
+						}
+						*/
+
+						int quinte_flush_royale = 0;
+						int best_carte_quinte_flush = 0;
+						for (int i = 0; i < 7; ++i)
+						{
+							if (indice_quinte_flush[i] != -1)
+							{	
+								if(best_carte_quinte_flush < look_suite[indice_quinte_flush[i]])
+								{
+									best_carte_quinte_flush = look_suite[indice_quinte_flush[i]];
+								}
+								if (look_suite[indice_quinte_flush[i]] == 14) // si il y a un as dans la quinte flush 
+								{
+									// alors c'est une quinte flush royale !
+									
+									//printf("quinte flush royale !!!!\n");
+									
+									(*(score + p)).score1 = 130;
+									(*(score + p)).score2 = 130;
+									quinte_flush_royale = 1;
+								}
+								
+							}
+						}
+						if (quinte_flush_royale == 0)
+						{
+							/*
+							printf("quinte flush !\n");
+							*/
+							(*(score + p)).score1 = 105+best_carte_quinte_flush;
+							(*(score + p)).score2 = 105+best_carte_quinte_flush;
+							
+						}
+
+
+					}
+
+
+				}else
+				{	
+					// il y a juste une suite !
+					(*(score + p)).score1 = 53 + look_trie[indice_le_plus_grand_de_la_suite] -2 ;
+					(*(score + p)).score2 = 53 + look_trie[indice_le_plus_grand_de_la_suite] -2 ;
 				}
 
-
+				
 
 
 			}
 
 
 
+			// =======================fin detection suite
+
+			// ========================debut detection meme carte !
+
+			int cpt00[7] = {0,0,0,0,0,0,0};
+			int indice_cpt00[7] = {0,0,0,0,0,0,0};
+			int cpt_cpt00 = 0;
+			for (int i = 6; i >= 1; --i)
+			{	
+				if(look_trie[i] - look_trie[i-1] == 0)
+				{
+					cpt00[cpt_cpt00]++;
+					indice_cpt00[cpt_cpt00] = i;
+				}
+				else
+				{
+					cpt_cpt00++;
+				}
+			}
+			int a_carre = 0;
+			int a_brelan[2] = {0,0};
+			int nbs_brelan = 0;
+			int a_pair[3] = {0,0,0};
+			int nbs_pair = 0;
+			
 			/*
-			int de_combien_cela_se_suit;
-			for (int i = 0; i < 7; ++i) // detection suite
+			for (int i = 0; i < 7; ++i)
 			{
-				look[i] % 13
+				printf("cpt00: %d\n",cpt00[i]);
 			}
+			for (int i = 0; i < 7; ++i)
+			{
+				printf("indice cpt00: %d \n",indice_cpt00[i]);
+			}
+			*/
+
+			int potentiel_pair = 0;
+			int potentiel_brelan = 0;
+
+			for (int i = 0; i < 7; ++i)
+			{
+				if (cpt00[i] == 2)
+				{	
+					if (nbs_brelan < 1)
+					{
+						a_brelan[nbs_brelan] = look_trie[indice_cpt00[i]];
+						potentiel_brelan = a_brelan[nbs_brelan];
+						/*
+						printf("brelan a : %d\n",a_brelan[nbs_brelan]);
+						*/
+						if(40 + a_brelan[nbs_brelan] - 2 > (*(score + p)).score1)
+						{
+							(*(score + p)).score1 = 40 + a_brelan[nbs_brelan] - 2;
+							(*(score + p)).score2 = 40 + a_brelan[nbs_brelan] - 2;
+						}	
+						nbs_brelan +=1;	
+					}
+									
 				}
-*/
+				else if (cpt00[i] == 3)
+				{
+					a_carre = look_trie[indice_cpt00[i]];
+					/*
+					printf("carre a : %d\n",a_carre);
+					*/
+					if ( 92 + a_carre - 2 > (*(score + p)).score1 )
+					{
+						(*(score + p)).score1 = 92 + a_carre - 2;
+						(*(score + p)).score2 = 92 + a_carre - 2;
+					}
+					
+				}
+				else if (cpt00[i] == 1)
+				{	
+					if (nbs_pair == 0)
+					{
+						a_pair[nbs_pair] = look_trie[indice_cpt00[i]];
+						potentiel_pair = a_pair[nbs_pair];
+						/*
+						printf("pair a : %d\n", a_pair[nbs_pair]);		
+						*/
+						if (14 + a_pair[nbs_pair] - 2 > (*(score + p)).score1)
+						{
+							(*(score + p)).score1 = 14 + a_pair[nbs_pair] - 2;	
+							(*(score + p)).score2 = 14 + a_pair[nbs_pair] - 2;	
+						}
+					}
+					if (nbs_pair == 1)
+					{
+						a_pair[nbs_pair] = look_trie[indice_cpt00[i]];
+						/*
+						printf("deuxieme pair a : %d\n", a_pair[nbs_pair]);
+						*/
+						if (40 > (*(score + p)).score1)
+						{
+							(*(score + p)).score1 = (*(score + p)).score1 + 13;	
+							(*(score + p)).score2 = 27 + a_pair[nbs_pair] - 2;	
+						}
+					}
+					nbs_pair += 1;
+					
+				}
+
+				
+
+			}
+
+		if (nbs_pair >= 1 && nbs_brelan >= 1)
+			{
+				/*
+				printf("full, brelan a : %d et pair a : %d\n",potentiel_brelan, potentiel_pair);
+				*/
+				if (79 + potentiel_brelan -2 > (*(score + p)).score1 )
+				{
+					(*(score + p)).score1 = 79 + potentiel_brelan -2;	
+					(*(score + p)).score2 = 79 + potentiel_pair -2;	
+				}
+			}
 
 			
 
+		// plus haute carte !
 
+
+
+
+		if ((*(score + p)).score1 == 0)
+		{
+			if (look[0] > look[1])
+			{
+				(*(score + p)).score1 = look_suite[0]-2;	
+				(*(score + p)).score2 = look_suite[1]-2;	
+			}
+			else
+			{
+				(*(score + p)).score1 = look_suite[1]-2;	
+				(*(score + p)).score2 = look_suite[0]-2;	
+			}
+
+
+		}
+
+
+
+
+
+		/*
+		printf("\n");
+		printf("\n");
+		printf("SCORE1 : %d\n", (*(score + p)).score1 );
+		printf("SCORE2 : %d\n", (*(score + p)).score2 );
+		*/
 			
 
 
 		}
 
 
+		// gerer les egalité
+		// gerer si meme couleur !
+	
+	int win = 1;
+	int egalite = 0;
+	for (int i = 1; i < nbs_joueur+1; ++i)
+	{	
+		if( (*(score + i)).score1 > (*(score + 0)).score1 ) // si n'importe qui a un meilleur score que moi
+		{
+			// j'ai perdu !
+			win = 0;
+		}
+		else if ( (*(score + i)).score1 == (*(score + 0)).score1 ) // je verifie qu'on n'est pas le meme score
+		{
+			if ( (*(score + i)).score2 > (*(score + 0)).score2 ) // je verifie que cette personne na pas un meilleur score que moi
+			{
+				//j'ai perdu !
+				win = 0;
+			}
+			else if ( (*(score + i)).score2 == (*(score + 0)).score2  )
+			{
+				egalite = 1;
+				win = 1;
+			}
+
+		}
+	}
+	if (win == 1)
+	{	
+		/*
+		printf("WIN\n");
+		*/
+		nbs_fois_best_hand +=1;
+	}
+	else if (egalite == 1)
+	{
+		nbs_fois_best_hand +=1;
+
+	}
+	else
+	{
+		/*
+		printf("LOOSE\n");
+		*/
+	}
 	
 
 
 
+	
 
 
-	free(player);
+	
 
 
-
-
-
-	printf("win proba\n");
-
-	return 0;
 
 	} // fin boucle monte carlos
 
+	free(player);
+	free(score);
+
+	printf("nbs_fois_best_hand: %f\n", nbs_fois_best_hand);
+	printf("nombre de partie: %d\n",NBS_PARTIE);
+
+
+return nbs_fois_best_hand;
 }
+
 int main(void)
 {	
 	//initialisation du seed
@@ -516,10 +1085,17 @@ int main(void)
 	printf("sur la table: %s , %s , %s , %s , %s \n" , getnamecarte(inthemiddle[0]) , getnamecarte(inthemiddle[1]), getnamecarte(inthemiddle[2]), getnamecarte(inthemiddle[3]), getnamecarte(inthemiddle[4]));
 	printf("\n=================================================\n");
 
-	int proba = win_proba(nbs_joueur, nbs_carte, myhands, inthemiddle);
-
-
-
-
+	float win = win_proba(nbs_joueur, nbs_carte, myhands, inthemiddle);
+	printf("\n");
+	printf("\n");
+	printf("\n");
+	printf("\n");
+	float proba = win / NBS_PARTIE * 100;
+	
+	printf("==============================================================\n");
+	printf("probabilite de gagne : %.0002f % \n", proba );
+	printf("==============================================================\n");
+	int fin;
+	scanf("%d", &fin);
 	return 0;
 }
