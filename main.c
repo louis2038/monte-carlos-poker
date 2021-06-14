@@ -138,7 +138,7 @@ typedef struct Score
 }Score;
 
 
-int random( int MIN, int MAX)
+int randomF( int MIN, int MAX)
 {  
    int nbs_aleatoire;
    nbs_aleatoire = (rand() % (MAX - MIN + 1)) + MIN;
@@ -183,7 +183,7 @@ int choisir_carte_aleatoirement(CARTE *tas_de_carte)
 	int compteur_u = 0;
 	int carte_disponible = 0;
 
-	int nbs_ale = random(1,carte_restant_tas);
+	int nbs_ale = randomF(1,carte_restant_tas);
 	
 	for (int i = 0; i < 52; ++i)
 	{
@@ -1040,7 +1040,7 @@ int main(void)
 	// et petit random, pour initialisé les premieres valeurs !
 	for (int i = 0; i < 100; ++i)
 	{
-		random(0,52);
+		randomF(0,52);
 	}
 	
 
@@ -1093,7 +1093,7 @@ int main(void)
 	float proba = win / NBS_PARTIE * 100;
 	
 	printf("==============================================================\n");
-	printf("probabilite de gagne : %.0002f % \n", proba );
+	printf("probabilite de gagne : %f  \n", proba );
 	printf("==============================================================\n");
 	int fin;
 	scanf("%d", &fin);
