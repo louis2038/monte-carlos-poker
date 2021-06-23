@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define NBS_PARTIE 10000000
+
 
 
 typedef enum CARTE
@@ -210,7 +210,7 @@ int choisir_carte_aleatoirement(CARTE *tas_de_carte)
 
 
 // en pourcent, a l'unité près !
-float win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle)
+float win_proba(int nbs_joueur, int nbs_carte, CARTE *myhands, CARTE *inthemiddle, int NBS_PARTIE)
 {	
 	nbs_joueur -= 1;
 	CARTE tas_de_carte[52];
@@ -1034,7 +1034,7 @@ return nbs_fois_best_hand;
 }
 
 int main(void)
-{	
+{		
 	//initialisation du seed
 	srand(time(NULL));
 	// et petit random, pour initialisé les premieres valeurs !
@@ -1042,7 +1042,9 @@ int main(void)
 	{
 		randomF(0,52);
 	}
-	
+	int NBS_PARTIE = 0;
+	printf("combien de partie simule ?\n");
+	scanf("%d",&NBS_PARTIE);
 
 
 
@@ -1085,7 +1087,7 @@ int main(void)
 	printf("sur la table: %s , %s , %s , %s , %s \n" , getnamecarte(inthemiddle[0]) , getnamecarte(inthemiddle[1]), getnamecarte(inthemiddle[2]), getnamecarte(inthemiddle[3]), getnamecarte(inthemiddle[4]));
 	printf("\n=================================================\n");
 
-	float win = win_proba(nbs_joueur, nbs_carte, myhands, inthemiddle);
+	float win = win_proba(nbs_joueur, nbs_carte, myhands, inthemiddle,NBS_PARTIE);
 	printf("\n");
 	printf("\n");
 	printf("\n");
@@ -1097,5 +1099,7 @@ int main(void)
 	printf("==============================================================\n");
 	int fin;
 	scanf("%d", &fin);
+
+
 	return 0;
 }
